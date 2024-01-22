@@ -6,12 +6,17 @@ import (
 )
 
 type linkFlagSet struct {
-	ImportCfg string `sqflag:"-importcfg"`
-	Output    string `sqflag:"-o"`
+	ImportCfg string `ddflag:"-importcfg"`
+	Output    string `ddflag:"-o"`
 }
 
 type linkCommand struct {
 	command
+	flags linkFlagSet
+}
+
+func (cmd *linkCommand) Inject(i Injector) {
+	i.InjectLink(cmd)
 }
 
 func (cmd *linkCommand) Type() CommandType {
@@ -28,11 +33,5 @@ func parseLinkCommand(args []string) (Command, error) {
 	}
 	flags := &linkFlagSet{}
 	parseFlags(flags, args[1:])
-	return makeLinkCommandExecutionFunc(flags, args), nil
-}
-
-func makeLinkCommandExecutionFunc(flags *linkFlagSet, args []string) Command {
-	//buildDir := filepath.Dir(flags.Output)
-
-	return &linkCommand{command: NewCommand(args)}
+	return &linkCommand{command: NewCommand(args), flags: *flags}, nil
 }

@@ -10,14 +10,15 @@ import (
 type (
 	CommandType uint32
 	Command     interface {
+		Inject(injector Injector)
 		Exec() error
-		ReplaceParam(param string, val ...string) error
+		ReplaceParam(param string, val string) error
 		Stage() string
 		Type() CommandType
 	}
 
 	commandFlagSet struct {
-		Output string `sqflag:"-o"`
+		Output string `ddflag:"-o"`
 	}
 
 	command struct {
@@ -59,15 +60,14 @@ func NewCommand(args []string) command {
 	return cmd
 }
 
-func (cmd *command) ReplaceParam(param string, val ...string) error {
+func (cmd *command) ReplaceParam(param string, val string) error {
 	i, ok := cmd.paramPos[param]
 	if !ok {
-		return fmt.Errorf("param %s not found", param)
+		return fmt.Errorf("%s not found", param)
 	}
-	for _, v := range val {
-		cmd.args[i] = v
-		i++
-	}
+	cmd.args[i] = val
+	delete(cmd.paramPos, param)
+	cmd.paramPos[val] = i
 	return nil
 }
 
@@ -90,3 +90,5 @@ func (cmd *command) Stage() string {
 func (cmd *command) Type() CommandType {
 	return CommandTypeUnknown
 }
+
+func (cmd *command) Inject(Injector) {}

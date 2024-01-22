@@ -7,12 +7,15 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os/exec"
+	"strings"
 )
 
 type compileFlagSet struct {
-	Package   string `sqflag:"-p"`
-	ImportCfg string `sqflag:"-importcfg"`
-	Output    string `sqflag:"-o"`
+	Package   string `ddflag:"-p"`
+	ImportCfg string `ddflag:"-importcfg"`
+	Output    string `ddflag:"-o"`
 }
 
 type compileCommand struct {
@@ -20,6 +23,10 @@ type compileCommand struct {
 }
 
 func (cmd *compileCommand) Type() CommandType { return CommandTypeCompile }
+
+func (cmd *compileCommand) Inject(i Injector) {
+	i.InjectCompile(cmd)
+}
 
 func (f *compileFlagSet) IsValid() bool {
 	return f.Package != "" && f.Output != "" && f.ImportCfg != ""
@@ -35,20 +42,24 @@ func parseCompileCommand(args []string) (Command, error) {
 	}
 	flags := &compileFlagSet{}
 	parseFlags(flags, args[1:])
-	return makeCompileCommandExecutionFunc(flags, args), nil
+	return &compileCommand{NewCommand(args)}, nil
 }
 
-func makeCompileCommandExecutionFunc(flags *compileFlagSet, args []string) Command {
-	//buildDir := filepath.Dir(flags.Output)
-	//stage := filepath.Base(buildDir)
+// Go builds in provided dir and returns the work directory's true path
+func goBuild(dir string, args ...string) (string, error) {
+	args = append([]string{"build", "-work", "-a", "-p", "1"}, args...)
+	cmd := exec.Command("go", args...)
+	cmd.Dir = dir
 
-	return &compileCommand{NewCommand(args)}
-	//	return func() ([]string, error) {
-	//		if !flags.IsValid() {
-	//			// Skip when the required set of flags is not valid.
-	//			log.Printf("nothing to do (%s)\n", flags)
-	//			return nil, nil
-	//		}
-	//
-	//		return args, nil
+	out, err := cmd.CombinedOutput()
+	log.Println(string(out))
+	if err != nil {
+		return "", err
+	}
+
+	// Extract work dir from output
+	wDir := strings.Split(string(out), "=")[1]
+	wDir = strings.TrimSuffix(wDir, "\n")
+
+	return wDir, nil
 }

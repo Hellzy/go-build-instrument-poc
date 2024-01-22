@@ -10,12 +10,12 @@ import (
 )
 
 type instrumentationToolFlagSet struct {
-	Help    bool `sqflag:"-h"`
-	Verbose bool `sqflag:"-v"`
-	Full    bool `sqflag:"-full"`
+	Help    bool `ddflag:"-h"`
+	Verbose bool `ddflag:"-v"`
+	Full    bool `ddflag:"-full"`
 }
 
-const structTagKey = "sqflag"
+const structTagKey = "ddflag"
 
 // parseFlags walks through the given arguments and sets the flagSet values
 // present in the argument list. Unknown options, not present in the flagSet

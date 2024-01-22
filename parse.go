@@ -11,8 +11,7 @@ type (
 		String()
 	}
 
-	parseCommandFunc     func([]string) (Command, error)
-	commandExecutionFunc func() (newArgs []string, err error)
+	parseCommandFunc func([]string) (Command, error)
 )
 
 var commandParserMap = map[string]parseCommandFunc{
